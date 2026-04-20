@@ -959,28 +959,26 @@ function updateWebLanding(){
 }
 
 // ─── Hub title ink staining ────────────────────────────────────────────────
-let titleStains=[],titleBRect=null;
-function resetTitleStain(){titleStains=[];titleBRect=null;const el=document.querySelector('.hub-title');if(el){el.style.backgroundImage='';el.style.webkitTextFillColor='#fff';el.style.webkitBackgroundClip='';el.style.backgroundClip='';}}
+let titleStains=[],titleBRect=null,lastStainT=0;
+function resetTitleStain(){titleStains=[];titleBRect=null;lastStainT=0;const el=document.querySelector('.hub-title');if(el){el.style.backgroundImage='';el.style.webkitTextFillColor='#fff';el.style.webkitBackgroundClip='';el.style.backgroundClip='';}}
 function updateTitleStain(){
   if(appState!=='hub')return;
   const el=document.querySelector('.hub-title');if(!el)return;
   if(!titleBRect||!titleBRect.width)titleBRect=el.getBoundingClientRect();
+  const now=Date.now();
+  if(now-lastStainT<280)return;
   for(const b of inkBlobs){
     if(b.life<.22)continue;
     if(b.x>titleBRect.left-90&&b.x<titleBRect.right+90&&b.y>titleBRect.top-75&&b.y<titleBRect.bottom+75){
-      const key=b.col.join(',');
-      if(!titleStains.find(s=>s.key===key)){
-        const nx=Math.max(0,Math.min(1,(b.x-titleBRect.left)/titleBRect.width));
-        titleStains.push({nx,col:b.col,key});
-        if(titleStains.length>7)titleStains.shift();
-        titleStains.sort((a,z)=>a.nx-z.nx);
-        const stops=[];
-        if(titleStains[0].nx>.06)stops.push('#fff 0%');
-        titleStains.forEach(s=>stops.push(`rgb(${s.col.join(',')}) ${(s.nx*100).toFixed(1)}%`));
-        if(titleStains[titleStains.length-1].nx<.94)stops.push('#fff 100%');
-        el.style.backgroundImage=`linear-gradient(to right,${stops.join(',')})`;
-        el.style.webkitBackgroundClip='text';el.style.backgroundClip='text';el.style.webkitTextFillColor='transparent';
-      }
+      lastStainT=now;
+      const nx=Math.max(0,Math.min(1,(b.x-titleBRect.left)/titleBRect.width));
+      titleStains.push({nx,col:b.col});
+      if(titleStains.length>22)titleStains.shift();
+      titleStains.sort((a,z)=>a.nx-z.nx);
+      const stops=titleStains.map(s=>`rgb(${s.col.join(',')}) ${(s.nx*100).toFixed(1)}%`);
+      el.style.backgroundImage=`linear-gradient(to right,${stops.join(',')})`;
+      el.style.webkitBackgroundClip='text';el.style.backgroundClip='text';el.style.webkitTextFillColor='transparent';
+      break;
     }
   }
 }
